@@ -1,78 +1,68 @@
+name: Build App
 on:
-    push:
-        branches:
-            - '*'
+    workflow_dispatch:
+        inputs:
+            os:
+                type: choice
+                description: OS to build on. Ubuntu is faster, MacOS supports iOS builds, Windows is unsupported
+                options:
+                    - macos-latest
+                    - ubuntu-latest
+            platform:
+                type: choice
+                description: Platform to build for
+                options:
+                    - android
+                    - ios
+            profile:
+                type: choice
+                description: Build profile to use
+                options:
+                    - development
+                    - preview
+                    - production
 jobs:
-    ios-build:
-        name: iOS Dev Build
+    build:
+        runs-on: ${{ github.event.inputs.os }}
+        strategy:
+            matrix:
+                node: [21.x]
         steps:
-            - name: Checkout repo from dev branch
-              uses: actions/checkout@v3
-            - name: Install npm dependency
-              run: npm install
-            - name: Cache cocoapods
-              uses: actions/cache@v3
-              with:
-                  path: /ios/Pods
-                  key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
-                  restore-keys: |
-                      ${{ runner.os }}-pods-
-            - name: Install pod dependency
-              run: |
-                  cd ios
-                  bundle exec pod install
-            - name: Build iOS JS Bundle
-              run: |
-                  npm run package-ios
-            - name: Install bundler
-              run: |
-                  cd ios
-                  gem install bundler
-            - name: Install gem plugins
-              run: |
-                  cd ios
-                  bundle install
-            - name: Run fastlane
-              run: |
-                  cd ios
-                  bundle exec fastlane build_testflight
-    android-build:
-        name: Android Dev Build
-            - name: Checkout repo from dev branch
-              uses: actions/checkout@v3
+            - name: 🏗 Setup repo
+              uses: actions/checkout@v2
 
-            - name: Install npm dependency
-              run: npm install
-            - name: Setup Android SDK
-              uses: android-actions/setup-android@v2
-            - uses: actions/cache@v3
+            - name: 🏗 Setup Node
+              uses: actions/setup-node@v2
               with:
-                  path: |
-                      ~/.gradle/caches
-                      ~/.gradle/wrapper
-                  key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-                  restore-keys: |
-                      ${{ runner.os }}-gradle-
-            - name: Setup Gradle
-              uses: gradle/gradle-build-action@v2
-            - name: Execute Gradle build
+                  node-version: ${{ matrix.node }}
+                  cache: yarn
+
+            - name: 🏗 Setup Expo and EAS
+              uses: expo/expo-github-action@v7
+              with:
+                  token: ${{ secrets.EXPO_TOKEN }}
+                  expo-version: latest
+                  eas-version: latest
+
+            - name: 🏗 Setup EAS local builds
+              run: yarn global add eas-cli-local-build-plugin
+
+            - name: 📦 Install dependencies
+              run: yarn
+
+            - name: 📋 Test project
+              run: yarn test
+
+            - name: 👷 Build app
               run: |
-                  cd android
-                  ./gradlew build
-            - name: Build Android JS Bundle
-              run: |
-                  npm run package-android
-            - name: Delete Android build duplicate assets resource
-              run: npm run delete-pics
-            - name: Install bundler
-              run: |
-                  cd android
-                  gem install bundler
-            - name: Install gem plugins
-              run: |
-                  cd android
-                  bundle install
-            - name: Run fastlane
-              run: |
-                  cd android
-                  bundle exec fastlane build_qa
+                  eas build --local \
+                    --non-interactive \
+                    --output=./app-build \
+                    --platform=${{ github.event.inputs.platform }} \
+                    --profile=${{ github.event.inputs.profile }}
+
+            - name: 📱 Upload binary
+              uses: actions/upload-artifact@v2
+              with:
+                  name: app-${{ github.event.inputs.platform }}
+                  path: app-build
