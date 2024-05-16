@@ -25,7 +25,20 @@ export default function RootLayout() {
     return (
         <ThemeProvider value={DarkTheme}>
             <Stack>
-                <Stack.Screen name="+not-found" />
+                <Stack.Screen
+                    name="index"
+                    options={{
+                        // Hide the header for this route
+                        headerShown: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="+not-found"
+                    options={{
+                        // Hide the header for this route
+                        headerShown: false,
+                    }}
+                />
             </Stack>
         </ThemeProvider>
     );
