@@ -1,5 +1,8 @@
 name: Build App
 on:
+    push:
+        branches:
+            - '*'
     workflow_dispatch:
         inputs:
             os:
