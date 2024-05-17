@@ -7,13 +7,16 @@
         "icon": "./src/assets/images/icon.png",
         "scheme": "myapp",
         "userInterfaceStyle": "automatic",
+        "jsEngine": "hermes",
+
         "splash": {
             "image": "./src/assets/images/splash.png",
             "resizeMode": "contain",
             "backgroundColor": "#000000"
         },
         "ios": {
-            "supportsTablet": true
+            "supportsTablet": true,
+            "jsEngine": "jsc"
         },
         "android": {
             "adaptiveIcon": {
