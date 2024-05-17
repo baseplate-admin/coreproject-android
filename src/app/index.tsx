@@ -1,11 +1,14 @@
 import { Text, View } from 'react-native';
+import CoreProjectLogo from '@/icons/coreproject-logo';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Index() {
     return (
-        <View>
-            <Text style={{ color: 'white' }}>
-                Edit app/index.tsx to edit this screen.
-            </Text>
-        </View>
+        <SafeAreaView>
+            <View>
+                <CoreProjectLogo />
+                
+            </View>
+        </SafeAreaView>
     );
 }
